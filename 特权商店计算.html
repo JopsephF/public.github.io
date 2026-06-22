@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>火影忍者特权商店计算器</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #e2e8f0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .container { background: var(--card); width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); padding: 32px; }
+        h1 { font-size: 22px; text-align: center; margin-bottom: 24px; color: var(--primary); }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #475569; }
+        input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 16px; outline: none; transition: border 0.2s; }
+        input:focus { border-color: var(--primary); }
+        input:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .result { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--border); display: none; }
+        .result.show { display: block; animation: fadeIn 0.3s ease; }
+        .result-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 15px; }
+        .result-row.highlight { font-size: 18px; font-weight: 700; color: var(--primary); margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>火影忍者特权商店计算器</h1>
+    
+    <div class="form-group">
+        <label for="price">碎片价格</label>
+        <input type="number" id="price" value="578" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+        <label>兑换积分（固定）</label>
+        <input type="text" value="2080" disabled>
+    </div>
+    <div class="form-group">
+        <label for="qty">购买总数</label>
+        <input type="number" id="qty" value="29" min="1" step="1">
+    </div>
+
+    <button onclick="calculate()">计算总金币</button>
+    
+    <div class="result" id="result" aria-live="polite"></div>
+</div>
+
+<script>
+const FIXED_THRESHOLD = 2080;
+
+function calculate() {
+    const price = parseFloat(document.getElementById('price').value);
+    const targetQty = parseInt(document.getElementById('qty').value);
+    const pointsRate = price; 
+
+    if (isNaN(price) || isNaN(targetQty) || price <= 0 || targetQty <= 0) {
+        alert('请填写有效的正数参数');
+        return;
+    }
+
+    const minCashQty = (FIXED_THRESHOLD * targetQty) / (pointsRate + FIXED_THRESHOLD);
+    const cashQty = Math.min(Math.ceil(minCashQty - 1e-9), targetQty);
+    const redeemQty = targetQty - cashQty;
+
+    const earnedPoints = cashQty * pointsRate;
+    const spentPoints = redeemQty * FIXED_THRESHOLD;
+    const remainingPoints = Math.max(0, earnedPoints - spentPoints);
+
+    const totalCost = cashQty * price;
+
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = `
+        <div class="result-row"><span>💰 金币购买</span><strong>${cashQty} 片</strong></div>
+        <div class="result-row"><span>🎁 积分兑换</span><strong>${redeemQty} 片</strong></div>
+        <div class="result-row"><span>🔄 剩余积分</span><strong>${Math.floor(remainingPoints)}</strong></div>
+        <div class="result-row highlight">
+            <span>消耗总金币</span>
+            <strong>${Math.floor(totalCost).toLocaleString('zh-CN')}</strong>
+        </div>
+    `;
+    resultDiv.classList.add('show');
+}
+
+document.querySelectorAll('input:not([disabled])').forEach(input => {
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') calculate(); });
+});
+</script>
+</body>
+</html>
